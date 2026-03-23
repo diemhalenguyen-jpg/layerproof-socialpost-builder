@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LayerProof Social Post Builder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --yellow: #FFDE42;
+    --cyan: #FF589B;
+    --purple: #7c6cff;
+    --red: #ff4444;
+    --green: #00c853;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  .nav {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo { font-weight: 900; font-size: 18px; margin-right: 24px; color: var(--cyan); }
+  .nav-step {
+    padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    transition: all 0.2s; border: 1px solid transparent;
+  }
+  .nav-step:hover { color: var(--text); }
+  .nav-step.active { background: var(--surface2); color: var(--cyan); border-color: var(--border); }
+  .nav-step.completed { color: var(--yellow); }
+  .nav-arrow { color: var(--text-muted); font-size: 12px; }
+
+  /* LAYOUT */
+  .step { display: none; padding: 32px 24px; max-width: 1200px; margin: 0 auto; }
+  .step.active { display: block; }
+  h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+  .subtitle { color: var(--text-muted); margin-bottom: 24px; font-size: 14px; }
+
+  /* FORMS */
+  textarea, input[type="text"], input[type="number"] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit;
+    font-size: 14px; padding: 12px 16px; resize: vertical; outline: none;
+  }
+  textarea:focus, input:focus { border-color: var(--cyan); }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field { margin-bottom: 16px; }
+  .char-count { text-align: right; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .char-count.over { color: var(--red); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 14px;
+    cursor: pointer; border: none; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary { background: var(--cyan); color: #000; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--cyan); }
+  .btn-yellow { background: var(--yellow); color: #000; }
+  .btn-small { padding: 6px 12px; font-size: 12px; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+  .btn-group { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .card h3 { font-size: 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card h3 .badge { background: var(--surface2); color: var(--cyan); font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+
+  /* HOOK CARDS */
+  .hook-card {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 12px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .hook-card:hover { border-color: var(--cyan); }
+  .hook-card.selected { border-color: var(--cyan); background: rgba(0,229,255,0.05); }
+  .hook-card .hook-type {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    color: var(--yellow); margin-bottom: 8px; letter-spacing: 0.5px;
+  }
+  .hook-card .hook-text { font-size: 15px; line-height: 1.5; }
+  .hook-card .hook-label {
+    display: inline-block; margin-top: 10px; font-size: 11px;
+    color: var(--text-muted); background: var(--surface2);
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .hook-card .recommended {
+    display: inline-block; margin-top: 10px; margin-left: 6px; font-size: 11px;
+    color: var(--green); background: rgba(0,200,83,0.1);
+    padding: 2px 8px; border-radius: 4px; font-weight: 600;
+  }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: 600;
+    color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* THREAD */
+  .thread-tweet {
+    background: var(--surface2); border-radius: 8px; padding: 16px;
+    margin-bottom: 8px; position: relative; border-left: 2px solid var(--cyan);
+  }
+  .thread-tweet .tweet-num {
+    font-size: 11px; font-weight: 700; color: var(--cyan); margin-bottom: 6px;
+  }
+  .thread-tweet textarea { background: var(--surface); min-height: 80px; }
+
+  /* COMMENT BOX */
+  .comment-regen {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin-top: 16px;
+    display: flex; gap: 12px; align-items: flex-end;
+  }
+  .comment-regen textarea {
+    flex: 1; min-height: 44px; max-height: 100px; background: var(--surface);
+  }
+  .comment-regen .btn { flex-shrink: 0; }
+
+  /* IMAGE BUILDER */
+  .builder-layout { display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
+  .builder-controls { max-height: calc(100vh - 120px); overflow-y: auto; padding-right: 8px; }
+  .builder-preview { display: flex; flex-direction: column; align-items: center; gap: 16px; position: sticky; top: 80px; }
+
+  .slide-canvas {
+    width: 420px; height: 420px; background: #000;
+    border-radius: 4px; position: relative; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .slide-canvas.portrait { height: 525px; }
+
+  .slide-canvas .slide-title {
+    position: absolute; top: 28px; left: 28px; right: 90px;
+    z-index: 10;
+  }
+  .slide-canvas .slide-title .line1 {
+    font-family: 'Anton', sans-serif;
+    font-size: 24px; color: var(--yellow); text-transform: uppercase;
+    line-height: 1.05;
+  }
+  .slide-canvas .slide-title .line2 {
+    font-family: 'Anton', sans-serif;
+    font-size: 20px; color: var(--cyan); text-transform: uppercase;
+    line-height: 1.05; margin-top: 4px;
+  }
+
+  .slide-canvas .slide-icon {
+    position: absolute; top: 28px; right: 28px; width: 55px; height: 55px;
+    z-index: 10; display: flex; align-items: center; justify-content: center;
+  }
+  .slide-canvas .slide-icon svg { width: 100%; height: 100%; }
+
+  .slide-canvas .slide-image-area {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 80%; height: 50%; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; margin-top: 20px;
+  }
+  .slide-canvas .slide-image-area img {
+    max-width: 100%; max-height: 100%; object-fit: contain;
+  }
+
+  .slide-canvas .slide-logo {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px;
+    color: #fff;
+  }
+
+  /* DROP ZONE */
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 8px;
+    padding: 24px; text-align: center; color: var(--text-muted);
+    cursor: pointer; transition: all 0.2s; font-size: 13px;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--cyan); color: var(--text);
+  }
+  .drop-zone img { max-width: 100%; max-height: 150px; border-radius: 4px; margin-top: 8px; }
+
+  /* ICON GRID */
+  .icon-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+    overflow: hidden;
+  }
+  .icon-option {
+    background: var(--surface2); border: 2px solid var(--border);
+    border-radius: 8px; padding: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; aspect-ratio: 1; overflow: hidden;
+    min-width: 0;
+  }
+  .icon-option:hover { border-color: var(--cyan); }
+  .icon-option.selected { border-color: var(--cyan); background: rgba(0,229,255,0.08); }
+  .icon-option svg { width: 100%; height: 100%; display: block; }
+
+  /* CAROUSEL */
+  .carousel-slides { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+  .carousel-thumb {
+    width: 80px; height: 80px; background: var(--surface2); border: 2px solid var(--border);
+    border-radius: 6px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+  }
+  .carousel-thumb.active { border-color: var(--cyan); color: var(--cyan); }
+  .carousel-thumb:hover { border-color: var(--cyan); }
+
+  .add-slide-btn {
+    width: 80px; height: 80px; background: transparent; border: 2px dashed var(--border);
+    border-radius: 6px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: var(--text-muted); transition: all 0.2s;
+  }
+  .add-slide-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* SIZE TOGGLE */
+  .size-toggle { display: flex; gap: 4px; margin-bottom: 16px; }
+  .size-toggle button {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text-muted); transition: all 0.2s;
+  }
+  .size-toggle button.active { background: var(--cyan); color: #000; border-color: var(--cyan); }
+
+  /* COPY BUTTON */
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; cursor: pointer; font-weight: 600;
+  }
+  .copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  .post-preview {
+    position: relative; background: var(--surface2); border-radius: 8px;
+    padding: 16px; white-space: pre-wrap; line-height: 1.6; font-size: 14px;
+  }
+
+  /* SLIDER */
+  input[type="range"] {
+    width: 100%; accent-color: var(--cyan);
+  }
+
+  .hidden { display: none !important; }
+
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--green); color: #000; padding: 12px 20px;
+    border-radius: 8px; font-weight: 600; font-size: 14px;
+    z-index: 1000; transform: translateY(80px); opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ICON TOPICS */
+  .icon-topics { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .icon-topic-btn {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .icon-topic-btn:hover { color: var(--text); border-color: var(--cyan); }
+  .icon-topic-btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); }
+
+  /* COLOR CHIPS */
+  .color-chip {
+    width: 20px; height: 20px; border-radius: 50%; border: 2px solid #555;
+    cursor: pointer; flex-shrink: 0; transition: border-color 0.15s;
+  }
+  .color-chip:hover { border-color: #fff; transform: scale(1.15); }
+
+  /* LAYOUT SELECTOR */
+  .layout-selector { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px; }
+  .layout-btn {
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text-muted); transition: all 0.15s; flex: 1;
+  }
+  .layout-btn:hover { color: var(--text); border-color: var(--cyan); }
+  .layout-btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); }
+
+  /* CAROUSEL PLAN CARDS */
+  .carousel-plan-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 10px;
+  }
+  .cplan-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .cplan-num { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+  .cplan-layout-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .cplan-title { font-family: 'Anton', sans-serif; font-size: 18px; color: var(--cyan); margin-bottom: 6px; text-transform: uppercase; }
+  .cplan-subtitle { font-size: 14px; color: var(--yellow); margin-bottom: 4px; font-weight: 700; }
+  .cplan-body { font-size: 13px; color: var(--text); line-height: 1.5; margin-bottom: 4px; }
+  .cplan-stat { font-size: 14px; color: #fff; font-weight: 700; margin-bottom: 8px; }
+  .cplan-bullet { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; padding-left: 4px; }
+  .cplan-url { font-size: 12px; color: var(--cyan); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo"><img src="logo.svg" height="20" alt="LayerProof" style="display:block; vertical-align:middle;"></div>
+  <div class="nav-step active" data-step="0" onclick="goStep(0)">1. Blog Input</div>
+  <span class="nav-arrow">→</span>
+  <div class="nav-step" data-step="1" onclick="goStep(1)">2. Pick Hook</div>
+  <span class="nav-arrow">→</span>
+  <div class="nav-step" data-step="2" onclick="goStep(2)">3. Posts</div>
+  <span class="nav-arrow">→</span>
+  <div class="nav-step" data-step="3" onclick="goStep(3)">4. Image Builder</div>
+</nav>
+
+<!-- STEP 0: BLOG INPUT -->
+<div class="step active" id="step-0">
+  <h2>Paste Your Blog</h2>
+  <p class="subtitle">Paste blog text → Gemini AI generates 3 hooks → pick one → all posts auto-generated.</p>
+  <div class="field">
+    <label>Gemini API Key</label>
+    <input type="password" id="api-key" placeholder="AIza..." style="font-family:monospace; font-size:13px;" oninput="localStorage.setItem('lp_gemini_key', this.value.trim())">
+    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--cyan);">aistudio.google.com/apikey</a> — stored locally in your browser only.</div>
+  </div>
+  <div class="field">
+    <label>Blog Content</label>
+    <textarea id="blog-input" rows="14" placeholder="Paste your blog post here..."></textarea>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" id="gen-hooks-btn" onclick="generateHooks()">Generate 5 Hooks →</button>
+  </div>
+  <div id="loading-indicator" class="hidden" style="margin-top:16px; color:var(--cyan); font-weight:600;">⏳ Generating with Gemini...</div>
+</div>
+
+<!-- STEP 1: PICK HOOK -->
+<div class="step" id="step-1">
+  <h2>Pick Your Hook</h2>
+  <p class="subtitle">3 hook options based on your blog. Click one to select, then confirm to generate all post formats.</p>
+  <div id="hooks-container"></div>
+
+  <div class="comment-regen" style="margin-top:20px;">
+    <textarea id="hook-comment" rows="2" placeholder="Want a tweak? Tell me what to change and hit regenerate..."></textarea>
+    <button class="btn btn-secondary" onclick="regenerateHooks()">↻ Regen</button>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="goStep(0)">← Back</button>
+    <button class="btn btn-primary" id="confirm-hook-btn" onclick="confirmHook()" disabled>Confirm Hook & Generate Posts →</button>
+  </div>
+  <div id="loading-posts" class="hidden" style="margin-top:16px; color:var(--cyan); font-weight:600;">⏳ Generating all posts with Gemini...</div>
+</div>
+
+<!-- STEP 2: POSTS -->
+<div class="step" id="step-2">
+  <h2>Your Social Posts</h2>
+  <p class="subtitle">All formats generated from your selected hook. Edit directly or leave a comment to regenerate.</p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this, 'tab-thread')">X Thread</div>
+    <div class="tab" onclick="switchTab(this, 'tab-single')">Single X Post</div>
+    <div class="tab" onclick="switchTab(this, 'tab-threads')">Threads</div>
+    <div class="tab" onclick="switchTab(this, 'tab-instagram')">Instagram</div>
+    <div class="tab" onclick="switchTab(this, 'tab-carousel')" style="color:var(--yellow);">⧉ Carousel</div>
+  </div>
+
+  <!-- X THREAD (default) -->
+  <div class="tab-content active" id="tab-thread">
+    <div class="card">
+      <h3>X Thread <span class="badge">180-240 chars/tweet · 280 max</span></h3>
+      <div id="thread-container"></div>
+      <div class="comment-regen">
+        <textarea id="thread-comment" rows="2" placeholder="Comment: e.g. 'make tweet 3 shorter' or 'add a tweet about the solution'..."></textarea>
+        <button class="btn btn-secondary" onclick="regenFormat('thread')">↻ Regen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SINGLE X POST -->
+  <div class="tab-content" id="tab-single">
+    <div class="card">
+      <h3>Single X Post <span class="badge">200-260 chars · 280 max</span></h3>
+      <div class="post-preview" id="single-preview"></div>
+      <div class="char-count" id="single-count"></div>
+      <div class="comment-regen">
+        <textarea id="single-comment" rows="2" placeholder="Comment: e.g. 'make it more punchy' or 'lead with the stat'..."></textarea>
+        <button class="btn btn-secondary" onclick="regenFormat('single')">↻ Regen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- THREADS (META) -->
+  <div class="tab-content" id="tab-threads">
+    <div class="card">
+      <h3>Threads <span class="badge">multi-post · 500 chars each</span></h3>
+      <div id="threads-container"></div>
+      <div class="comment-regen">
+        <textarea id="threads-comment" rows="2" placeholder="Comment: e.g. 'make post 2 more personal' or 'add a hot take'..."></textarea>
+        <button class="btn btn-secondary" onclick="regenFormat('threads')">↻ Regen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTAGRAM CAPTION -->
+  <div class="tab-content" id="tab-instagram">
+    <div class="card">
+      <h3>Instagram Caption <span class="badge">~50 words · with hashtags</span></h3>
+      <div class="post-preview" id="instagram-preview"></div>
+      <div class="comment-regen">
+        <textarea id="instagram-comment" rows="2" placeholder="Comment: e.g. 'different CTA' or 'more casual tone'..."></textarea>
+        <button class="btn btn-secondary" onclick="regenFormat('instagram')">↻ Regen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAROUSEL PLAN -->
+  <div class="tab-content" id="tab-carousel">
+    <div class="card">
+      <h3>Carousel Plan <span class="badge">Instagram · Swipeable</span></h3>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">AI builds a slide-by-slide plan: Cover → Content → "Interested?" CTA. Based on your selected hook.</p>
+      <div id="carousel-plan-container">
+        <p style="color:var(--text-muted); font-size:13px;">Hit Generate to build the plan.</p>
+      </div>
+      <div class="comment-regen" style="margin-top:16px;">
+        <textarea id="carousel-comment" rows="2" placeholder="Optional direction, e.g. 'focus on the stats angle' or 'use a tool comparison format'..."></textarea>
+        <button class="btn btn-primary" id="carousel-gen-btn" onclick="generateCarousel()">Generate Carousel</button>
+      </div>
+      <div id="loading-carousel" class="hidden" style="margin-top:12px; color:var(--cyan); font-weight:600;">⏳ Planning slides with Gemini...</div>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="goStep(1)">← Back to Hooks</button>
+    <button class="btn btn-primary" onclick="goToImageBuilder()">Build Images →</button>
+  </div>
+</div>
+
+<!-- STEP 3: IMAGE BUILDER -->
+<div class="step" id="step-3">
+  <h2>Image Builder</h2>
+  <p class="subtitle">Create post images in your brand style. Single or carousel. Download as PNG.</p>
+
+  <div class="builder-layout">
+    <!-- LEFT: CONTROLS -->
+    <div class="builder-controls">
+
+      <!-- MODE -->
+      <div class="card">
+        <h3>Mode</h3>
+        <div class="size-toggle" id="mode-toggle">
+          <button class="active" onclick="setMode('single', this)">Single Image</button>
+          <button onclick="setMode('carousel', this)">Carousel</button>
+        </div>
+      </div>
+
+      <!-- CAROUSEL SLIDES (hidden by default) -->
+      <div class="card hidden" id="carousel-panel">
+        <h3>Slides</h3>
+        <div class="carousel-slides" id="carousel-thumbs"></div>
+      </div>
+
+      <!-- ASPECT RATIO -->
+      <div class="card">
+        <h3>Aspect Ratio</h3>
+        <div class="size-toggle" id="ratio-toggle">
+          <button class="active" onclick="setRatio('square', this)">1:1 Square</button>
+          <button onclick="setRatio('portrait', this)">4:5 Portrait</button>
+        </div>
+      </div>
+
+      <!-- SLIDE LAYOUT -->
+      <div class="card">
+        <h3>Slide Layout</h3>
+        <div class="layout-selector" id="layout-selector"></div>
+      </div>
+
+      <!-- TITLE TEXT -->
+      <div class="card">
+        <h3>Title Text</h3>
+        <div class="field">
+          <label>Line 1 (Yellow on Cover / Accent on others)</label>
+          <input type="text" id="title-line1" value="AI GETS FACTS WRONG" oninput="updatePreview()" placeholder="Main headline...">
+        </div>
+        <div class="field" id="ctrl-line2">
+          <label>Line 2 (Pink) — Cover only</label>
+          <input type="text" id="title-line2" value="IN YOUR REPORT" oninput="updatePreview()" placeholder="Sub headline...">
+        </div>
+        <div class="field" id="ctrl-sizes">
+          <label>Title 1 Size</label>
+          <input type="range" id="title-size1" min="18" max="72" value="32" oninput="updatePreview()">
+        </div>
+        <div class="field" id="ctrl-size2" style="display:none;">
+          <label>Title 2 Size</label>
+          <input type="range" id="title-size2" min="14" max="56" value="26" oninput="updatePreview()">
+        </div>
+      </div>
+
+      <!-- BODY TEXT (text-slide, cta) -->
+      <div class="card" id="ctrl-body" style="display:none;">
+        <h3>Body Text</h3>
+        <div class="field">
+          <textarea id="slide-body-text" rows="5" oninput="state.slides[state.currentSlide].bodyHtml=null;updatePreview()" placeholder="Body text for this slide..."></textarea>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <label style="margin:0;font-size:11px;">Text color:</label>
+          <button class="color-chip" style="background:#fff;" onclick="setBodyColor('#ffffff')" title="White"></button>
+          <button class="color-chip" style="background:#FFDE42;" onclick="setBodyColor('#FFDE42')" title="Yellow"></button>
+          <button class="color-chip" style="background:#FF589B;" onclick="setBodyColor('#FF589B')" title="Pink"></button>
+          <button class="color-chip" style="background:#aaa;" onclick="setBodyColor('#aaaaaa')" title="Grey"></button>
+          <label style="margin:0 0 0 8px;font-size:11px;">Body size:</label>
+          <input type="range" id="body-size" min="11" max="26" value="16" oninput="updatePreview()" style="width:80px;">
+        </div>
+      </div>
+
+      <!-- BULLETS (bullets-slide, stats-slide) -->
+      <div class="card" id="ctrl-bullets" style="display:none;">
+        <h3>Bullet Points <span class="badge">one per line</span></h3>
+        <div class="field">
+          <textarea id="slide-bullets-text" rows="5" oninput="updatePreview()" placeholder="First bullet&#10;Second bullet&#10;Third bullet"></textarea>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <label style="margin:0;font-size:11px;">Bullet color:</label>
+          <button class="color-chip" style="background:#FF589B;" onclick="setBulletColor('#FF589B')" title="Pink"></button>
+          <button class="color-chip" style="background:#FFDE42;" onclick="setBulletColor('#FFDE42')" title="Yellow"></button>
+          <button class="color-chip" style="background:#fff;" onclick="setBulletColor('#ffffff')" title="White"></button>
+          <label style="margin:0 0 0 8px;font-size:11px;">Text size:</label>
+          <input type="range" id="bullet-size" min="10" max="22" value="15" oninput="updatePreview()" style="width:80px;">
+        </div>
+      </div>
+
+      <!-- STAT (stats-slide) -->
+      <div class="card" id="ctrl-stat" style="display:none;">
+        <h3>Key Stat / Claim</h3>
+        <div class="field">
+          <input type="text" id="slide-stat-text" oninput="updatePreview()" placeholder="e.g. Beautiful.ai claimed $15.2B — actual consensus: ~$6-7B">
+        </div>
+      </div>
+
+      <!-- URL (cta) -->
+      <div class="card" id="ctrl-url" style="display:none;">
+        <h3>URL Button</h3>
+        <div class="field">
+          <input type="text" id="slide-url-text" value="layerproof.app" oninput="updatePreview()">
+        </div>
+      </div>
+
+      <!-- SWIPE LABEL -->
+      <div class="card" id="ctrl-swipe" style="display:none;">
+        <h3>Swipe Label</h3>
+        <div class="field">
+          <input type="text" id="slide-swipe-label" placeholder="Swipe for more" oninput="updatePreview()">
+        </div>
+      </div>
+
+      <!-- ICON (cover only) -->
+      <div class="card" id="ctrl-icon">
+        <h3>Icon</h3>
+        <div class="icon-topics" id="icon-topics"></div>
+        <div class="icon-grid" id="icon-grid"></div>
+        <div class="field" style="margin-top:12px;">
+          <label>Icon Scale</label>
+          <input type="range" id="icon-scale" min="40" max="180" value="100" oninput="updateIconScale()">
+        </div>
+      </div>
+
+      <!-- CENTER IMAGE -->
+      <div class="card" id="ctrl-image">
+        <h3>Image</h3>
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+          <div>Drop image here, paste from clipboard, or click to browse</div>
+          <img id="drop-preview" class="hidden">
+        </div>
+        <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+        <div class="field" style="margin-top:12px;">
+          <label>Image Scale</label>
+          <input type="range" id="img-scale" min="30" max="250" value="80" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Vertical Position</label>
+          <input type="range" id="img-y" min="20" max="85" value="55" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Border Radius</label>
+          <input type="range" id="img-radius" min="0" max="30" value="8" oninput="updatePreview()">
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PREVIEW -->
+    <div class="builder-preview">
+      <div class="slide-canvas" id="slide-canvas"></div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="downloadSlide()">⬇ Download PNG</button>
+        <button class="btn btn-yellow hidden" id="download-all-btn" onclick="downloadAllSlides()">⬇ Download All Slides</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- CANVAS WORD COLOR TOOLBAR -->
+<div id="canvas-color-toolbar" style="display:none;position:fixed;background:#1e1e1e;border:1px solid #444;border-radius:8px;padding:5px 10px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.7);flex-direction:row;gap:8px;align-items:center;">
+  <span style="font-size:10px;color:#888;font-weight:700;font-family:Inter,sans-serif;letter-spacing:0.5px;">COLOR</span>
+  <button onmousedown="event.preventDefault()" onclick="applyCanvasColor('#ffffff')" style="width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #555;cursor:pointer;flex-shrink:0;" title="White"></button>
+  <button onmousedown="event.preventDefault()" onclick="applyCanvasColor('#FFDE42')" style="width:18px;height:18px;border-radius:50%;background:#FFDE42;border:2px solid #555;cursor:pointer;flex-shrink:0;" title="Yellow"></button>
+  <button onmousedown="event.preventDefault()" onclick="applyCanvasColor('#FF589B')" style="width:18px;height:18px;border-radius:50%;background:#FF589B;border:2px solid #555;cursor:pointer;flex-shrink:0;" title="Pink"></button>
+  <button onmousedown="event.preventDefault()" onclick="applyCanvasColor('#aaaaaa')" style="width:18px;height:18px;border-radius:50%;background:#aaa;border:2px solid #555;cursor:pointer;flex-shrink:0;" title="Grey"></button>
+  <div style="width:1px;height:16px;background:#444;margin:0 2px;flex-shrink:0;"></div>
+  <button onmousedown="event.preventDefault()" onclick="applyCanvasBold()" style="width:24px;height:22px;border-radius:4px;background:#333;border:1px solid #555;cursor:pointer;font-weight:900;font-size:13px;color:#fff;font-family:serif;flex-shrink:0;" title="Bold">B</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
