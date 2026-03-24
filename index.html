@@ -589,6 +589,14 @@
           <label>Icon Scale</label>
           <input type="range" id="icon-scale" min="40" max="180" value="100" oninput="updateIconScale()">
         </div>
+        <div class="field">
+          <label>Horizontal Position</label>
+          <input type="range" id="icon-x" min="0" max="100" value="7" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Rotate (deg)</label>
+          <input type="range" id="icon-rotate" min="-180" max="180" value="0" oninput="updatePreview()">
+        </div>
       </div>
 
       <!-- CENTER IMAGE -->
@@ -601,16 +609,44 @@
         <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
         <div class="field" style="margin-top:12px;">
           <label>Image Scale</label>
-          <input type="range" id="img-scale" min="30" max="250" value="80" oninput="updatePreview()">
+          <input type="range" id="img-scale" min="30" max="500" value="80" oninput="updatePreview()">
         </div>
         <div class="field">
           <label>Vertical Position</label>
-          <input type="range" id="img-y" min="20" max="85" value="55" oninput="updatePreview()">
+          <input type="range" id="img-y" min="20" max="95" value="55" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Horizontal Position</label>
+          <input type="range" id="img-x" min="5" max="95" value="50" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Rotate (deg)</label>
+          <input type="range" id="img-rotate" min="-180" max="180" value="0" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Opacity</label>
+          <input type="range" id="img-opacity" min="0" max="100" value="100" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Exposure (Brightness)</label>
+          <input type="range" id="img-exposure" min="-80" max="200" value="0" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Black Overlay (dim to dark)</label>
+          <input type="range" id="img-black-overlay" min="0" max="95" value="0" oninput="updatePreview()">
         </div>
         <div class="field">
           <label>Border Radius</label>
-          <input type="range" id="img-radius" min="0" max="30" value="8" oninput="updatePreview()">
+          <input type="range" id="img-radius" min="0" max="60" value="8" oninput="updatePreview()">
         </div>
+      </div>
+
+      <!-- FREESTYLE TEXT LAYERS -->
+      <div class="card" id="ctrl-text-layers">
+        <h3>✏️ Freestyle Text <span class="badge">Add Anywhere</span></h3>
+        <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Add captions, subtitles, or labels. Supports Anton, Roboto, and Inter fonts. Drag with X/Y sliders.</p>
+        <div id="text-layers-container"></div>
+        <button class="btn btn-secondary" style="width:100%;margin-top:4px;" onclick="addTextLayer()">+ Add Text Layer</button>
       </div>
     </div>
 
